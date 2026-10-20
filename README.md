@@ -1,14 +1,5 @@
 # Diapasón Armónico: app instalable (PWA)
 
-Esta web contiene dos apps instalables por separado:
-
-| App | Dirección | Carpeta |
-|---|---|---|
-| Diapasón Armónico | https://bajinista.github.io/diapason/ | raíz |
-| Armonía Negativa | https://bajinista.github.io/diapason/negativa/ | `negativa/` |
-
-Cada una tiene su propio `sw.js` y su propio número de versión. Para publicar una versión nueva de Armonía Negativa, sube `VERSION` en `negativa/sw.js`.
-
 ## Qué hay en la carpeta
 
 | Archivo | Para qué sirve |

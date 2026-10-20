@@ -1,6 +1,6 @@
 // Diapasón Armónico — service worker
 // Cambia VERSION cada vez que publiques una versión nueva: la app avisará al usuario para actualizar.
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.0.1';
 const SHELL_CACHE = `diapason-shell-${VERSION}`;
 const FONT_CACHE = 'diapason-fonts';
 const SHELL = [
@@ -52,6 +52,11 @@ self.addEventListener('fetch', event => {
   }
 
   if (url.origin !== self.location.origin) return;
+
+  // Las otras apps de esta web (por ejemplo /negativa/) tienen su propio service worker.
+  const root = new URL('./', self.location).pathname;
+  const rest = url.pathname.slice(root.length);
+  if (url.pathname.startsWith(root) && rest.includes('/') && !rest.startsWith('icons/')) return;
 
   // Archivos propios: responde al momento desde la caché y la refresca en segundo plano.
   event.respondWith((async () => {

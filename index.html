@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diapasón Armónico</title>
+<meta name="description" content="Escalas, armonización en triadas y cuatriadas y arpegios sobre el mástil de la guitarra, para diestros y zurdos.">
+<meta name="theme-color" content="#E8EBEE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111418" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Diapasón">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: barra de controles arriba, mástil como protagonista (horizontal en escritorio, vertical en móvil), debajo la armonización y la ficha del acorde. */
+:root{
+  --bg:#E8EBEE; --panel:#F7F8F9; --ink:#161A1F; --muted:#59636E; --line:#CBD2D9; --hover:#E2E6EA;
+  --tonic:#C93F2B; --f3:#C98A12; --f5:#1B877C; --f7:#6450C2;
+  --wood:#3A2921; --wood-edge:#2A1D17; --fret:#B7BEC6; --nut:#E9E2D2; --string:#D9D2C2;
+  --pearl:#EEE9DE; --pearl-ink:#2A221D; --inlay:#CBBFA8; --shade:rgba(10,8,6,.55); --ghost:rgba(238,233,222,.22);
+  --board-text:#59636E;
+  --display:"Bricolage Grotesque", "Avenir Next Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111418; --panel:#191D23; --ink:#E4E8EC; --muted:#97A1AC; --line:#2B323A; --hover:#222830;
+  --tonic:#EE5A43; --f3:#EDB13A; --f5:#33B2A4; --f7:#9483F2;
+  --wood:#32241D; --wood-edge:#1E1511; --board-text:#97A1AC; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#111418; --panel:#191D23; --ink:#E4E8EC; --muted:#97A1AC; --line:#2B323A; --hover:#222830;
+  --tonic:#EE5A43; --f3:#EDB13A; --f5:#33B2A4; --f7:#9483F2;
+  --wood:#32241D; --wood-edge:#1E1511; --board-text:#97A1AC; color-scheme:dark }
+
+body{ background:var(--bg); color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.45 }
+.wrap{ max-width:1320px; margin:0 auto; padding-block:20px 48px;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));
+  display:grid; gap:18px; grid-template-columns:minmax(0,1fr) }
+header{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 18px; justify-content:space-between }
+h1{ font-family:var(--display); font-weight:800; font-size:clamp(26px,4vw,38px); letter-spacing:-.02em; margin:0; line-height:1 }
+h1 span{ color:var(--tonic) }
+.sub{ color:var(--muted); margin:0; max-width:60ch; flex-basis:100% }
+
+.controls{ display:flex; flex-wrap:wrap; gap:14px 22px; align-items:flex-end;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px }
+.ctl{ display:grid; gap:5px; min-width:0 }
+.ctl > label, .ctl > .lbl{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600 }
+select, input[type=number]{ font:inherit; font-size:14px; color:var(--ink); background:var(--bg); border:1px solid var(--line);
+  border-radius:7px; padding:7px 9px; min-height:36px }
+input[type=number]{ width:64px; font-family:var(--mono) }
+.range{ display:flex; gap:6px; align-items:center; color:var(--muted); font-size:13px }
+.seg{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--bg) }
+.seg button{ font:inherit; font-size:13.5px; font-weight:500; border:0; background:transparent; color:var(--muted);
+  padding:8px 12px; cursor:pointer; min-height:36px }
+.seg button + button{ border-left:1px solid var(--line) }
+.seg button[aria-pressed="true"]{ background:var(--ink); color:var(--bg) }
+.seg button:not([aria-pressed="true"]):not(:disabled):hover{ background:var(--hover); color:var(--ink) }
+.seg button:disabled{ opacity:.4; cursor:not-allowed }
+button:focus-visible, select:focus-visible, input:focus-visible, .note:focus-visible{ outline:2px solid var(--tonic); outline-offset:2px }
+.adv{ display:contents }
+.morebtn{ display:none }
+
+.board{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 0 6px; min-width:0 }
+.board-head{ display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; justify-content:space-between; padding:0 16px 8px }
+.now{ font-family:var(--display); font-weight:700; font-size:20px; letter-spacing:-.01em }
+.now small{ font-family:var(--body); font-weight:500; font-size:13px; color:var(--muted); margin-left:8px }
+.legend{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:13px; color:var(--muted) }
+.legend i{ display:inline-block; width:12px; height:12px; border-radius:50%; vertical-align:-1px; margin-right:5px }
+.scroll{ overflow-x:auto; padding:0 8px 6px }
+svg.neck{ display:block; width:100%; height:auto; margin:0 auto }
+.note{ cursor:pointer; -webkit-tap-highlight-color:transparent }
+.note:hover circle.dot{ stroke:var(--pearl); stroke-width:2.5 }
+.hint{ font-size:12.5px; color:var(--muted); padding:0 16px 6px; margin:0 }
+
+.bottom{ display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:18px }
+@media (max-width:900px){ .bottom{ grid-template-columns:minmax(0,1fr) } }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; min-width:0 }
+.card h2{ font-family:var(--display); font-weight:700; font-size:17px; margin:0 0 12px; letter-spacing:-.01em }
+.harm-scroll{ overflow-x:auto }
+table.harm{ border-collapse:separate; border-spacing:6px; width:100%; min-width:620px; margin:-6px }
+table.harm th{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600; text-align:left; padding:0 4px; white-space:nowrap }
+table.harm thead th{ text-align:center; font-family:var(--mono); letter-spacing:0; text-transform:none; font-size:12px }
+.chord{ width:100%; font:inherit; display:grid; gap:2px; justify-items:center; padding:9px 4px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--line); background:var(--bg); color:var(--ink) }
+.chord:hover{ background:var(--hover) }
+.chord b{ font-family:var(--display); font-weight:700; font-size:17px; letter-spacing:-.01em; white-space:nowrap }
+.chord span{ font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:nowrap }
+.chord[aria-pressed="true"]{ background:var(--ink); border-color:var(--ink); color:var(--bg) }
+.chord[aria-pressed="true"] span{ color:var(--bg); opacity:.75 }
+.pick-head{ margin-bottom:10px }
+.pick{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px }
+.pick .chord{ padding:8px 2px; min-height:52px }
+.pick .chord b{ font-size:14.5px; white-space:normal; overflow-wrap:anywhere; text-align:center; line-height:1.15 }
+
+.info-name{ font-family:var(--display); font-weight:800; font-size:34px; letter-spacing:-.02em; line-height:1; margin:0 0 4px }
+.info-meta{ color:var(--muted); margin:0 0 14px; font-size:13.5px }
+.tones{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px }
+.tone{ display:grid; justify-items:center; gap:2px; min-width:48px; padding:7px 8px; border-radius:8px; border:1px solid var(--line); background:var(--bg) }
+.tone b{ font-family:var(--mono); font-size:16px }
+.tone span{ font-family:var(--mono); font-size:11.5px; font-weight:700 }
+.actions{ display:flex; flex-wrap:wrap; gap:8px }
+.btn{ font:inherit; font-size:14px; font-weight:600; border-radius:8px; padding:9px 14px; cursor:pointer; border:1px solid var(--line); background:var(--bg); color:var(--ink); min-height:38px }
+.btn.primary{ background:var(--tonic); border-color:var(--tonic); color:#fff }
+.btn:hover{ filter:brightness(1.06) }
+
+@media (max-width:720px){
+  .wrap{ gap:12px; padding-block:12px 32px }
+  header{ order:1 } .controls{ order:2 } #harmCard{ order:3 } .board{ order:4 } #info{ order:5 }
+  .bottom{ display:contents }
+  .sub{ font-size:13.5px }
+  .controls{ padding:12px; gap:10px 12px }
+  .ctl{ flex:1 1 140px }
+  .ctl select{ width:100% }
+  .seg{ display:flex; width:100% }
+  .seg button{ flex:1 1 0; padding:8px 6px; font-size:13px }
+  .ctl.wide{ flex-basis:100% }
+  .ios-tip{ order:1 }
+  .morebtn{ display:inline-flex; align-items:center; justify-content:center; width:100% }
+  .adv{ display:none; width:100%; flex-wrap:wrap; gap:10px 12px; align-items:flex-end }
+  .adv.open{ display:flex }
+  .card{ padding:12px }
+  .now{ font-size:17px } .now small{ display:block; margin:2px 0 0 }
+  .info-name{ font-size:28px }
+}
+@media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important } }
+
+/* Base que antes ponía el visor de Claude, y ajustes de app instalada */
+*,*::before,*::after{ box-sizing:border-box }
+:root{ padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px) }
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100% }
+body{ margin:0; touch-action:manipulation; overscroll-behavior-y:none }
+body::before{ content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:10; background:var(--bg) }
+img{ max-width:100% }
+[hidden]{ display:none!important }
+.note, .chord, .seg, .btn{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none }
+.head-actions{ display:flex; gap:8px; align-items:center }
+.ios-tip{ display:flex; gap:12px; align-items:flex-start; background:var(--panel); border:1px solid var(--tonic); border-radius:10px; padding:12px 14px; font-size:14px }
+.ios-tip p{ margin:0; flex:1; min-width:0 }
+.ios-tip .share{ display:inline-block; width:15px; height:18px; vertical-align:-3px; margin:0 2px }
+.ios-tip button{ font:inherit; border:0; background:transparent; color:var(--muted); font-size:20px; line-height:1; cursor:pointer; padding:2px 6px; min-height:32px }
+.toast{ position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; justify-content:center; pointer-events:none;
+  padding:0 max(16px, env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px)) }
+.toast > div{ pointer-events:auto; display:flex; gap:12px; align-items:center; background:var(--ink); color:var(--bg); border-radius:10px; padding:10px 10px 10px 16px; box-shadow:0 8px 24px rgba(0,0,0,.25); font-size:14px; max-width:100% }
+.toast .btn{ background:var(--tonic); border-color:var(--tonic); color:#fff; padding:7px 12px; min-height:34px }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Diapasón <span>Armónico</span></h1>
+    <div class="head-actions"><button class="btn primary" id="installBtn" hidden>Instalar app</button></div>
+    <p class="sub">Escalas, armonización y arpegios sobre el mástil. Elige un grado para ver su arpegio; pulsa cualquier nota para oírla.</p>
+  </header>
+
+  <div class="ios-tip" id="iosTip" hidden role="note">
+    <p><b>Instálala en tu iPhone:</b> pulsa
+      <svg class="share" viewBox="0 0 15 18" aria-label="Compartir"><path d="M7.5 1v10M4 4.5 7.5 1 11 4.5M3 7.5H1.5v9.5h12V7.5H12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <b>Compartir</b> y después <b>Añadir a pantalla de inicio</b>. Se abrirá a pantalla completa y funcionará sin conexión.</p>
+    <button id="iosTipClose" aria-label="Cerrar aviso">×</button>
+  </div>
+
+  <section class="controls" aria-label="Ajustes">
+    <div class="ctl"><label for="root">Tónica</label><select id="root"></select></div>
+    <div class="ctl"><label for="scale">Escala</label><select id="scale"></select></div>
+    <div class="ctl"><span class="lbl">Mano</span>
+      <div class="seg" id="hand"><button data-v="r">Diestro</button><button data-v="l">Zurdo</button></div></div>
+    <div class="ctl wide"><span class="lbl">Etiquetas</span>
+      <div class="seg" id="labels"><button data-v="note">Nota</button><button data-v="int">Intervalo</button><button data-v="deg">Grado</button></div></div>
+    <button class="btn morebtn" id="more" aria-expanded="false" aria-controls="adv">Más ajustes</button>
+    <div class="adv" id="adv">
+      <div class="ctl"><span class="lbl">Mástil</span>
+        <div class="seg" id="view"><button data-v="auto">Auto</button><button data-v="h">Horizontal</button><button data-v="v">Vertical</button></div></div>
+      <div class="ctl"><span class="lbl">6ª cuerda</span>
+        <div class="seg" id="orient"><button data-v="bottom">Abajo</button><button data-v="top">Arriba</button></div></div>
+      <div class="ctl"><label for="tuning">Afinación</label><select id="tuning"></select></div>
+      <div class="ctl"><label for="frets">Trastes</label><select id="frets"></select></div>
+      <div class="ctl"><span class="lbl">Zona de estudio</span>
+        <div class="range"><input type="number" id="zfrom" min="0" aria-label="Desde traste"> a <input type="number" id="zto" min="0" aria-label="Hasta traste"></div></div>
+    </div>
+  </section>
+
+  <section class="board" aria-label="Mástil">
+    <div class="board-head">
+      <div class="now" id="now"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="scroll"><svg class="neck" id="neck" role="img" aria-label="Mástil de guitarra"></svg></div>
+    <p class="hint" id="hint"></p>
+  </section>
+
+  <div class="bottom">
+    <section class="card" aria-label="Armonización" id="harmCard">
+      <h2>Armonización de la escala</h2>
+      <div class="harm-scroll" id="harm"></div>
+    </section>
+    <section class="card" aria-label="Detalle" id="info"></section>
+  </div>
+</div>
+
+<script>
+(() => {
+// ---------- Teoría ----------
+const LETTERS = ['C','D','E','F','G','A','B'], NAT = [0,2,4,5,7,9,11], MAJ = NAT;
+const ACC = {'-2':'𝄫','-1':'♭','0':'','1':'♯','2':'𝄪'};
+const ROOTS = [['C',0],['C',1],['D',-1],['D',0],['D',1],['E',-1],['E',0],['F',0],['F',1],['G',-1],['G',0],['G',1],['A',-1],['A',0],['A',1],['B',-1],['B',0]];
+const SCALES = [
+  {g:'Modos de la escala mayor', items:[
+    ['ionian','Mayor (Jónico)',[0,2,4,5,7,9,11]],['dorian','Dórico',[0,2,3,5,7,9,10]],['phrygian','Frigio',[0,1,3,5,7,8,10]],
+    ['lydian','Lidio',[0,2,4,6,7,9,11]],['mixo','Mixolidio',[0,2,4,5,7,9,10]],['aeolian','Menor natural (Eólico)',[0,2,3,5,7,8,10]],
+    ['locrian','Locrio',[0,1,3,5,6,8,10]]]},
+  {g:'Menor armónica y melódica', items:[
+    ['harm','Menor armónica',[0,2,3,5,7,8,11]],['phrdom','Frigio dominante',[0,1,4,5,7,8,10]],
+    ['mel','Menor melódica',[0,2,3,5,7,9,11]],['lyddom','Lidio dominante',[0,2,4,6,7,9,10]],['alt','Alterada',[0,1,3,4,6,8,10]]]},
+];
+const SCALE_BY = {}; SCALES.forEach(g => g.items.forEach(s => SCALE_BY[s[0]] = {name:s[1], iv:s[2]}));
+const TUNINGS = {std:['Estándar (E A D G B E)',[40,45,50,55,59,64]], half:['Medio tono abajo',[39,44,49,54,58,63]],
+  dropd:['Drop D',[38,45,50,55,59,64]], dadgad:['DADGAD',[38,45,50,55,57,62]], openg:['Open G',[38,43,50,55,59,62]]};
+const SHARP = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const ROMAN = ['I','II','III','IV','V','VI','VII'];
+
+const mod = (n,m) => ((n % m) + m) % m;
+const accOf = d => ACC[String(mod(d+6,12)-6)] ?? '?';
+function spell(li, pc){ return LETTERS[li] + accOf(pc - NAT[li]); }
+function intName(num, semis){ return accOf(semis - MAJ[(num-1)%7]) + num; }
+function buildScale(rootIdx, key){
+  const [L, a] = ROOTS[rootIdx]; const li = LETTERS.indexOf(L); const rpc = mod(NAT[li]+a,12);
+  const iv = SCALE_BY[key].iv;
+  const notes = iv.map((s,i) => ({pc: mod(rpc+s,12), name: spell((li+i)%7, mod(rpc+s,12)), semis:s, deg:i+1}));
+  return {rpc, iv, notes};
+}
+const TRIAD = {'4,7':['maj',''], '3,7':['m','m'], '3,6':['dim','°'], '4,8':['aug','+']};
+const SEVENTH = {'4,7,11':'maj7','4,7,10':'7','3,7,10':'m7','3,7,11':'m(maj7)','3,6,10':'m7♭5','3,6,9':'°7','4,8,11':'maj7♯5','4,8,10':'7♯5','4,6,10':'7♭5','4,6,11':'maj7♭5'};
+function chordAt(sc, i, size){
+  const idx = [0,2,4,6].slice(0,size).map(k => (i+k)%7);
+  const tones = idx.map((j,k) => { const n = sc.notes[j]; const semis = mod(n.semis - sc.notes[i].semis, 12);
+    return {...n, semis, fn:[1,3,5,7][k], label:k===0?'1':intName([1,3,5,7][k], semis)}; });
+  const key = tones.slice(1).map(t => t.semis).join(',');
+  const suf = size===3 ? (TRIAD[key]?.[1] ?? '('+tones.slice(1).map(t=>t.label).join(' ')+')') : (SEVENTH[key] ?? '('+tones.slice(1).map(t=>t.label).join(' ')+')');
+  const rAcc = accOf(sc.notes[i].semis - MAJ[i]);
+  return {deg:i, tones, name: sc.notes[i].name + suf, roman: rAcc + ROMAN[i] + suf, suffix:suf};
+}
+
+// ---------- Estado ----------
+const DEF = {root:0, scale:'ionian', hand:'r', orient:'bottom', labels:'note', tuning:'std', frets:15, zfrom:0, zto:15, sel:null, showScale:true, view:'auto', size:4};
+let S = {...DEF};
+try { const raw = localStorage.getItem('diapason-v1'); if (raw) S = {...DEF, ...JSON.parse(raw)}; } catch(e){}
+const save = () => { try { localStorage.setItem('diapason-v1', JSON.stringify(S)); } catch(e){} };
+const isNarrow = () => window.innerWidth <= 720;
+const isVertical = () => S.view === 'v' || (S.view === 'auto' && isNarrow());
+
+// ---------- Controles ----------
+const $ = id => document.getElementById(id);
+$('root').innerHTML = ROOTS.map(([L,a],i) => `<option value="${i}">${L+ACC[a]}</option>`).join('');
+$('scale').innerHTML = SCALES.map(g => `<optgroup label="${g.g}">${g.items.map(s=>`<option value="${s[0]}">${s[1]}</option>`).join('')}</optgroup>`).join('');
+$('tuning').innerHTML = Object.entries(TUNINGS).map(([k,v]) => `<option value="${k}">${v[0]}</option>`).join('');
+$('frets').innerHTML = [12,15,17,19,22,24].map(n => `<option value="${n}">${n}</option>`).join('');
+
+function syncControls(){
+  $('root').value = S.root; $('scale').value = S.scale; $('tuning').value = S.tuning; $('frets').value = S.frets;
+  $('zfrom').value = S.zfrom; $('zto').value = S.zto; $('zfrom').max = $('zto').max = S.frets;
+  ['hand','orient','labels','view'].forEach(k =>
+    $(k).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === S[k]))));
+  const V = isVertical();
+  $('orient').querySelectorAll('button').forEach(b => { b.disabled = V; });
+  $('orient').title = V ? 'En vertical, la 6ª cuerda se coloca según la mano' : '';
+}
+const set = patch => { S = {...S, ...patch}; save(); render(); };
+$('root').onchange = e => set({root:+e.target.value});
+$('scale').onchange = e => set({scale:e.target.value});
+$('tuning').onchange = e => set({tuning:e.target.value});
+$('frets').onchange = e => { const f = +e.target.value; set({frets:f, zfrom:Math.min(S.zfrom,f), zto: S.zto===S.frets||S.zto>f ? f : S.zto}); };
+const zone = () => { let a = Math.max(0, Math.min(S.frets, +$('zfrom').value||0)), b = Math.max(0, Math.min(S.frets, +$('zto').value||0)); if (a>b) [a,b]=[b,a]; set({zfrom:a, zto:b}); };
+$('zfrom').onchange = zone; $('zto').onchange = zone;
+['hand','orient','labels','view'].forEach(id => $(id).onclick = e => { const b = e.target.closest('button'); if (b && !b.disabled) set({[id]:b.dataset.v}); });
+$('more').onclick = () => { const o = $('adv').classList.toggle('open'); $('more').setAttribute('aria-expanded', String(o)); $('more').textContent = o ? 'Menos ajustes' : 'Más ajustes'; };
+
+// ---------- Audio ----------
+let AC = null;
+function pluck(midi, when=0){
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    const t = AC.currentTime + when, f = 440*Math.pow(2,(midi-69)/12);
+    const o = AC.createOscillator(), o2 = AC.createOscillator(), g = AC.createGain(), lp = AC.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f*2;
+    lp.type = 'lowpass'; lp.frequency.setValueAtTime(f*8, t); lp.frequency.exponentialRampToValueAtTime(f*1.5, t+0.6);
+    const g2 = AC.createGain(); g2.gain.value = 0.25;
+    o.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(g); g.connect(AC.destination);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t+0.006); g.gain.exponentialRampToValueAtTime(0.0001, t+1.6);
+    o.start(t); o2.start(t); o.stop(t+1.7); o2.stop(t+1.7);
+  } catch(e){}
+}
+function playSeq(p){
+  const base = 40 + mod(p.root - 4, 12);
+  [...p.list, 12].forEach((s,i) => pluck(base + s, i*0.28));
+}
+
+// ---------- Render ----------
+let lastLayout = null;
+function render(){
+  lastLayout = String(isNarrow()) + S.view;
+  syncControls();
+  const sc = buildScale(S.root, S.scale);
+  const sel = S.sel && S.sel.deg < 7 ? S.sel : null;
+  const chord = sel ? chordAt(sc, sel.deg, sel.size) : null;
+  const tuning = TUNINGS[S.tuning][1], N = tuning.length, max = S.frets;
+  const scaleIdx = {}; sc.notes.forEach((n,i) => scaleIdx[n.pc] = i);
+  const chordIdx = {}; if (chord) chord.tones.forEach((t,k) => chordIdx[t.pc] = k);
+  const FN_COL = ['var(--tonic)','var(--f3)','var(--f5)','var(--f7)'];
+
+  // Geometría: "a" recorre el mástil (trastes), "c" lo cruza (cuerdas).
+  const V = isVertical();
+  const padOpen = 50, padR = 16, base = V ? 62 : 76, k = V ? 0.975 : 0.966, top = 30, gap = V ? 42 : 34;
+  const xs = [padOpen]; for (let n=1; n<=max; n++) xs.push(xs[n-1] + base*Math.pow(k, n-1));
+  const L = Math.round(xs[max] + padR), boardH = gap*(N-1), C = top + boardH + 46;
+  const W = V ? C : L, H = V ? L : C;
+  const P = (a, c) => V ? [c, a] : [S.hand === 'l' ? L - a : a, c];
+  const acrossIdx = s => V ? (S.hand === 'l' ? N-1-s : s) : (S.orient === 'bottom' ? N-1-s : s);
+  const Cs = s => top + acrossIdx(s) * gap;
+  const cx = n => n === 0 ? padOpen/2 - 2 : (xs[n-1] + xs[n]) / 2;
+  const rect = (a1,a2,c,h,fill,extra='') => { const [x1,y1]=P(a1,c), [x2,y2]=P(a2,c+h);
+    return `<rect x="${Math.min(x1,x2)}" y="${Math.min(y1,y2)}" width="${Math.abs(x2-x1)}" height="${Math.abs(y2-y1)}" fill="${fill}" ${extra}/>`; };
+  const line = (a1,c1,a2,c2,attrs) => { const [x1,y1]=P(a1,c1), [x2,y2]=P(a2,c2); return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${attrs}/>`; };
+  const circ = (a,c,attrs) => { const [x,y]=P(a,c); return `<circle cx="${x}" cy="${y}" ${attrs}/>`; };
+  const txt = (a,c,dy,attrs,content) => { const [x,y]=P(a,c); return `<text x="${x}" y="${y+dy}" text-anchor="middle" ${attrs}>${content}</text>`; };
+  const openName = (s, pc) => txt(cx(0), Cs(s), 4, `font-family="var(--mono)" font-size="11" fill="var(--board-text)"`, SHARP[pc]);
+
+  let g = '';
+  const bTop = top - 16, bH = boardH + 32;
+  g += rect(xs[0], xs[max], bTop, bH, 'var(--wood)', 'rx="3"');
+  g += rect(xs[0], xs[max], bTop + bH - 3, 3, 'var(--wood-edge)');
+  [3,5,7,9,15,17,19,21].filter(n => n<=max).forEach(n => g += circ(cx(n), top+boardH/2, `r="6" fill="var(--inlay)" opacity=".55"`));
+  [12,24].filter(n => n<=max).forEach(n => {
+    g += circ(cx(n), top+gap*1.5, `r="6" fill="var(--inlay)" opacity=".55"`) + circ(cx(n), top+boardH-gap*1.5, `r="6" fill="var(--inlay)" opacity=".55"`); });
+  for (let n=1; n<=max; n++) g += line(xs[n], bTop, xs[n], bTop+bH, `stroke="var(--fret)" stroke-width="2.4"`);
+  g += rect(xs[0]-6, xs[0], bTop-1, bH+2, 'var(--nut)');
+  if (S.zfrom > 0) g += rect(xs[0], xs[S.zfrom-1], bTop-2, bH+4, 'var(--shade)');
+  if (S.zto < max) g += rect(xs[S.zto], xs[max], bTop-2, bH+4, 'var(--shade)');
+  for (let s=0; s<N; s++) { const w = 2.6 - s*0.32; g += line(xs[0], Cs(s), xs[max], Cs(s), `stroke="var(--string)" stroke-width="${w.toFixed(2)}" opacity=".9"`); }
+  for (let n=0; n<=max; n++) {
+    const strong = [3,5,7,9,12,15,17,19,21,24].includes(n);
+    g += txt(cx(n), top+boardH+(V?34:38), V?4:0, `font-family="var(--mono)" font-size="12" font-weight="${strong?700:500}" fill="var(--board-text)" opacity="${strong?1:.6}"`, n);
+  }
+  for (let s=0; s<N; s++) for (let n=0; n<=max; n++) {
+    const midi = tuning[s] + n, pc = mod(midi, 12);
+    const inZone = n >= S.zfrom && n <= S.zto;
+    const si = scaleIdx[pc];
+    if (si === undefined || !inZone) { if (n === 0) g += openName(s, pc); continue; }
+    const sn = sc.notes[si];
+    let fill, ink, r = 12.5, ring = '', label, opacity = 1;
+    if (chord) {
+      const ci = chordIdx[pc];
+      if (ci !== undefined) {
+        const t = chord.tones[ci]; fill = FN_COL[ci]; ink = '#fff';
+        label = S.labels==='note' ? t.name : S.labels==='int' ? t.label : String(sn.deg);
+        if (ci === 0) { r = 14.5; ring = circ(cx(n), Cs(s), `r="${r+3.5}" fill="none" stroke="var(--tonic)" stroke-width="2"`); }
+      } else {
+        if (!S.showScale) { if (n === 0) g += openName(s, pc); continue; }
+        fill = 'var(--ghost)'; ink = 'var(--pearl)'; r = 10; opacity = .9;
+        const off = mod(si - chord.deg, 7), semis = mod(sn.semis - sc.notes[chord.deg].semis, 12);
+        label = S.labels==='note' ? sn.name : S.labels==='int' ? intName(off+1, semis) : String(sn.deg);
+      }
+    } else {
+      const isT = si === 0;
+      fill = isT ? 'var(--tonic)' : 'var(--pearl)'; ink = isT ? '#fff' : 'var(--pearl-ink)';
+      if (isT) { r = 14.5; ring = circ(cx(n), Cs(s), `r="${r+3.5}" fill="none" stroke="var(--tonic)" stroke-width="2"`); }
+      label = S.labels==='note' ? sn.name : S.labels==='int' ? intName(sn.deg, sn.semis) : String(sn.deg);
+    }
+    const fs = label.length > 2 ? 9.5 : (r < 11 ? 10 : 11.5);
+    g += `<g class="note" data-midi="${midi}" tabindex="0" role="button" aria-label="${sn.name}, cuerda ${N-s}, traste ${n}" opacity="${opacity}">${ring}${circ(cx(n), Cs(s), `class="dot" r="${r}" fill="${fill}"`)}${txt(cx(n), Cs(s), 4, `font-family="var(--mono)" font-weight="700" font-size="${fs}" fill="${ink}" pointer-events="none"`, label)}</g>`;
+  }
+  const svg = $('neck');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.style.minWidth = V ? '0' : Math.round(W*0.78) + 'px';
+  svg.style.maxWidth = V ? '440px' : 'none';
+  svg.innerHTML = g;
+
+  // Cabecera del mástil
+  const scName = SCALE_BY[S.scale].name;
+  $('now').innerHTML = chord
+    ? `${chord.name} <small>arpegio de ${sel.size===3?'triada':'cuatriada'} · grado ${chord.roman} de ${sc.notes[0].name} ${scName.toLowerCase()}</small>`
+    : `${sc.notes[0].name} ${scName} <small>escala completa</small>`;
+  $('legend').innerHTML = chord
+    ? chord.tones.map((t,i) => `<span><i style="background:${FN_COL[i]}"></i>${i===0?'Fundamental':t.label}</span>`).join('') + (S.showScale ? `<span><i style="background:var(--muted);opacity:.4"></i>Resto de la escala</span>` : '')
+    : `<span><i style="background:var(--tonic)"></i>Tónica</span><span><i style="background:var(--muted)"></i>Notas de la escala</span>`;
+  $('hint').textContent = V
+    ? `Vista vertical ${S.hand==='l'?'zurda':'diestra'}: cejuela arriba y 6ª cuerda a la ${S.hand==='l'?'derecha':'izquierda'}, como en un diagrama de acordes.`
+    : `${S.hand==='l'?'Vista zurda: la cejuela queda a la derecha.':'Vista diestra: la cejuela queda a la izquierda.'} La 6ª cuerda está ${S.orient==='bottom'?'abajo, como la ves al tocar':'arriba, como en la tablatura'}.`;
+
+  // Armonización
+  if (isNarrow()) {
+    const size = sel ? sel.size : S.size;
+    $('harm').innerHTML = `<div class="pick-head"><div class="seg">${[3,4].map(z => `<button data-pick-size="${z}" aria-pressed="${size===z}">${z===3?'Triadas':'Cuatriadas'}</button>`).join('')}</div></div>
+      <div class="pick"><button class="chord" data-deg="-1" aria-pressed="${!sel}"><b>Escala</b><span>${sc.notes[0].name}</span></button>${
+        sc.notes.map((_,i) => { const c = chordAt(sc,i,size); const on = sel && sel.deg===i;
+          return `<button class="chord" data-deg="${i}" data-size="${size}" aria-pressed="${!!on}"><b>${c.name}</b><span>${c.roman}</span></button>`; }).join('')}</div>`;
+  } else {
+    const head = `<thead><tr><th></th>${sc.notes.map((n,i) => `<th>${accOf(n.semis-MAJ[i])}${ROMAN[i]}</th>`).join('')}</tr></thead>`;
+    const row = size => `<tr><th scope="row">${size===3?'Triadas':'Cuatriadas'}</th>${sc.notes.map((_,i) => { const c = chordAt(sc,i,size);
+      const on = sel && sel.deg===i && sel.size===size;
+      return `<td><button class="chord" data-deg="${i}" data-size="${size}" aria-pressed="${!!on}"><b>${c.name}</b><span>${c.roman}</span></button></td>`; }).join('')}</tr>`;
+    $('harm').innerHTML = `<table class="harm">${head}<tbody>${row(3)}${row(4)}</tbody></table>`;
+  }
+
+  // Ficha
+  if (chord) {
+    const quality = {'':'Mayor','m':'Menor','°':'Disminuida','+':'Aumentada','maj7':'Séptima mayor','7':'Dominante','m7':'Menor séptima','m(maj7)':'Menor con séptima mayor','m7♭5':'Semidisminuido','°7':'Disminuido','maj7♯5':'Séptima mayor aumentada','7♯5':'Dominante aumentado'}[chord.suffix] || 'Acorde';
+    $('info').innerHTML = `<h2>Arpegio seleccionado</h2>
+      <p class="info-name">${chord.name}</p>
+      <p class="info-meta">${quality} · fórmula ${chord.tones.map(t=>t.label).join(' – ')}</p>
+      <div class="tones">${chord.tones.map((t,i)=>`<div class="tone"><b>${t.name}</b><span style="color:${FN_COL[i]}">${t.label}</span></div>`).join('')}</div>
+      <div class="actions">
+        <button class="btn primary" id="play">▶ Escuchar arpegio</button>
+        <button class="btn" id="toggleScale">${S.showScale?'Ocultar':'Mostrar'} resto de la escala</button>
+        <button class="btn" id="back">Ver escala</button>
+      </div>`;
+    $('play').onclick = () => playSeq({root: sc.notes[chord.deg].pc, list: chord.tones.map(t=>t.semis)});
+    $('toggleScale').onclick = () => set({showScale: !S.showScale});
+    $('back').onclick = () => set({sel:null});
+  } else {
+    $('info').innerHTML = `<h2>Escala</h2>
+      <p class="info-name">${sc.notes[0].name} ${scName.replace(/ \(.*\)/,'')}</p>
+      <p class="info-meta">Fórmula ${sc.notes.map(n=>intName(n.deg,n.semis)).join(' – ')}</p>
+      <div class="tones">${sc.notes.map((n,i)=>`<div class="tone"><b>${n.name}</b><span style="color:${i===0?'var(--tonic)':'var(--muted)'}">${intName(n.deg,n.semis)}</span></div>`).join('')}</div>
+      <div class="actions"><button class="btn primary" id="play">▶ Escuchar escala</button></div>
+      <p class="info-meta" style="margin:14px 0 0">Pulsa un acorde de la armonización para ver su arpegio sobre el mástil.</p>`;
+    $('play').onclick = () => playSeq({root: sc.rpc, list: sc.iv});
+  }
+}
+
+$('harm').onclick = e => {
+  const ps = e.target.closest('[data-pick-size]');
+  if (ps) { const z = +ps.dataset.pickSize; set({size:z, sel: S.sel ? {...S.sel, size:z} : null}); return; }
+  const b = e.target.closest('.chord'); if (!b) return;
+  const deg = +b.dataset.deg; if (deg < 0) { set({sel:null}); return; }
+  const size = +b.dataset.size;
+  if (isNarrow()) { set({sel:{deg, size}, size}); return; }
+  set({sel: (S.sel && S.sel.deg===deg && S.sel.size===size) ? null : {deg, size}});
+};
+$('neck').addEventListener('click', e => { const n = e.target.closest('.note'); if (n) pluck(+n.dataset.midi); });
+$('neck').addEventListener('keydown', e => { const n = e.target.closest('.note'); if (n && (e.key==='Enter'||e.key===' ')) { e.preventDefault(); pluck(+n.dataset.midi); } });
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (String(isNarrow()) + S.view !== lastLayout) render(); }, 120); });
+
+render();
+})();
+</script>
+
+<div class="toast" id="updateToast" hidden role="status">
+  <div><span>Hay una versión nueva.</span><button class="btn" id="updateBtn">Actualizar</button></div>
+</div>
+
+<script>
+// ---------- PWA: instalación, aviso para iPhone y actualizaciones ----------
+(() => {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
+
+  // Android y escritorio (Chrome, Edge): botón "Instalar app"
+  let deferred = null;
+  const installBtn = document.getElementById('installBtn');
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; installBtn.hidden = false; });
+  installBtn.onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice.catch(() => {}); deferred = null; installBtn.hidden = true; };
+  addEventListener('appinstalled', () => { installBtn.hidden = true; });
+
+  // iPhone / iPad: iOS no tiene botón de instalar, así que se explica el gesto
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const tip = document.getElementById('iosTip');
+  if (isIOS && !standalone && store.get('diapason-ios-tip') !== 'off') tip.hidden = false;
+  document.getElementById('iosTipClose').onclick = () => { tip.hidden = true; store.set('diapason-ios-tip', 'off'); };
+
+  // Service worker: modo sin conexión y aviso de versión nueva
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  const toast = document.getElementById('updateToast');
+  let waiting = null, reloading = false;
+  const offer = w => { waiting = w; toast.hidden = false; };
+  document.getElementById('updateBtn').onclick = () => { if (waiting) waiting.postMessage({ type: 'SKIP_WAITING' }); else location.reload(); };
+  // Solo se recarga al cambiar de versión, no la primera vez que se instala el service worker
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (!hadController || reloading) return; reloading = true; location.reload(); });
+  addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+      if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
+      reg.addEventListener('updatefound', () => {
+        const w = reg.installing;
+        w && w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) offer(w); });
+      });
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // Diapasón Armónico — service worker
 // Cambia VERSION cada vez que publiques una versión nueva: la app avisará al usuario para actualizar.
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.0.2';
 const SHELL_CACHE = `diapason-shell-${VERSION}`;
 const FONT_CACHE = 'diapason-fonts';
 const SHELL = [
